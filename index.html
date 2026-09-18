@@ -414,10 +414,12 @@
     }
     tbody tr:nth-child(even) { background: var(--row-even); }
     tbody tr:hover { background: color-mix(in srgb, var(--owner-color, #0d7377) 6%, transparent); }
-    tbody tr.dragging { opacity: 0.45; }
-    tbody tr.drag-over {
-      outline: 2px dashed var(--owner-color, var(--primary));
-      outline-offset: -2px;
+    tbody tr.dragging { opacity: 0.45; cursor: grabbing; }
+    tbody tr.drag-over-above {
+      box-shadow: inset 0 2px 0 0 var(--owner-color, var(--primary));
+    }
+    tbody tr.drag-over-below {
+      box-shadow: inset 0 -2px 0 0 var(--owner-color, var(--primary));
     }
 
     td {
@@ -430,12 +432,38 @@
     .col-date { min-width: 100px; white-space: nowrap; }
     .col-date-short { min-width: 70px; white-space: nowrap; }
     .col-producto { min-width: 140px; }
-    .col-actions { min-width: 110px; white-space: nowrap; }
+    .col-actions { min-width: 130px; white-space: nowrap; }
 
     .task-desc {
       font-weight: 500;
       color: var(--text);
       word-break: break-word;
+    }
+
+    .actions-cell {
+      display: flex;
+      align-items: center;
+      gap: 0.15rem;
+    }
+
+    .reorder-btns {
+      display: none;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .reorder-btns .btn-icon {
+      width: 32px;
+      height: 28px;
+    }
+
+    .reorder-btns .btn-icon:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    @media (min-width: 901px) {
+      tbody tr[draggable="true"] { cursor: grab; }
     }
 
     /* ——— Badges & inline selects ——— */
@@ -506,22 +534,11 @@
     .product-link:hover { text-decoration: underline; }
     .product-empty { color: var(--text-muted); font-size: 0.8rem; }
 
-    .actions-cell {
-      display: flex;
-      align-items: center;
-      gap: 0.15rem;
-    }
-
     .no-tasks td {
       text-align: center;
       padding: 1.75rem;
       color: var(--text-muted);
       font-size: 0.875rem;
-    }
-
-    /* Drop zone when dragging onto owner */
-    .owner-section.drop-target {
-      box-shadow: 0 0 0 3px var(--owner-color), var(--shadow-lg);
     }
 
     /* ——— Modal ——— */
@@ -767,6 +784,15 @@
       }
 
       .owner-actions { margin-left: auto; }
+
+      .reorder-btns {
+        display: flex;
+      }
+
+      .reorder-btns .btn-icon {
+        width: 40px;
+        height: 32px;
+      }
 
       /* Card layout instead of wide table */
       .table-wrap {
@@ -1150,32 +1176,6 @@
     </div>
   </div>
 
-  <!-- Move Task Modal -->
-  <div class="modal-overlay" id="moveModal" role="dialog" aria-modal="true" aria-labelledby="moveModalTitle">
-    <div class="modal" style="max-width: 400px;">
-      <div class="modal-header">
-        <h3 id="moveModalTitle">Mover tarea</h3>
-        <button type="button" class="btn-icon" data-close-modal="moveModal" aria-label="Cerrar">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </div>
-      <form id="moveForm">
-        <div class="modal-body">
-          <input type="hidden" id="moveTaskId" />
-          <p id="moveTaskPreview" style="font-size:0.875rem;color:var(--text-muted);margin-bottom:0.5rem;"></p>
-          <div class="form-row">
-            <label for="moveOwnerSelect">Nuevo propietario</label>
-            <select id="moveOwnerSelect" required></select>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-ghost" data-close-modal="moveModal">Cancelar</button>
-          <button type="submit" class="btn btn-primary">Mover</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
   <!-- Confirm Modal -->
   <div class="modal-overlay" id="confirmModal" role="dialog" aria-modal="true">
     <div class="modal" style="max-width: 400px;">
@@ -1239,15 +1239,17 @@
       const ICONS = {
         edit: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
         trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`,
-        move: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 9 2 12 5 15"/><polyline points="19 15 22 12 19 9"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`,
         link: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`,
-        plus: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`
+        plus: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+        arrowUp: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>`,
+        arrowDown: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`
       };
 
       /** @type {{ owners: Array<{id:string,name:string,color:string,sala:string}>, tasks: Array<Object>, filter: string }} */
       let state = { owners: [], tasks: [], filter: "all" };
       let confirmCallback = null;
       let dragTaskId = null;
+      let dragOwnerId = null;
 
       /* ——— Persistence ——— */
       function loadState() {
@@ -1259,6 +1261,7 @@
               state.owners = parsed.owners.map(normalizeOwner);
               state.tasks = (parsed.tasks || []).map(normalizeTask);
               state.filter = parsed.filter || "all";
+              ensureTaskOrders();
               return;
             }
           }
@@ -1279,6 +1282,65 @@
       function normalizeTask(task) {
         const { sala, ...rest } = task;
         return rest;
+      }
+
+      function ensureTaskOrders() {
+        const byOwner = {};
+        state.tasks.forEach(t => {
+          if (!byOwner[t.ownerId]) byOwner[t.ownerId] = [];
+          byOwner[t.ownerId].push(t);
+        });
+        Object.values(byOwner).forEach(list => {
+          list.sort((a, b) => {
+            const ao = typeof a.order === "number" ? a.order : Number.MAX_SAFE_INTEGER;
+            const bo = typeof b.order === "number" ? b.order : Number.MAX_SAFE_INTEGER;
+            return ao - bo;
+          });
+          list.forEach((t, i) => { t.order = i; });
+        });
+      }
+
+      function getOwnerTasks(ownerId) {
+        return state.tasks
+          .filter(t => t.ownerId === ownerId)
+          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      }
+
+      function nextTaskOrder(ownerId) {
+        const tasks = getOwnerTasks(ownerId);
+        return tasks.length ? Math.max(...tasks.map(t => t.order ?? 0)) + 1 : 0;
+      }
+
+      function reindexOwnerTasks(ownerId) {
+        getOwnerTasks(ownerId).forEach((t, i) => { t.order = i; });
+      }
+
+      function shiftTaskOrder(taskId, direction) {
+        const task = state.tasks.find(t => t.id === taskId);
+        if (!task) return;
+        const list = getOwnerTasks(task.ownerId);
+        const idx = list.findIndex(t => t.id === taskId);
+        const swapIdx = idx + direction;
+        if (idx < 0 || swapIdx < 0 || swapIdx >= list.length) return;
+        const tmp = list[idx].order;
+        list[idx].order = list[swapIdx].order;
+        list[swapIdx].order = tmp;
+        saveState();
+        render();
+      }
+
+      function reorderOwnerTask(ownerId, fromIndex, toIndex) {
+        const list = getOwnerTasks(ownerId);
+        if (
+          fromIndex < 0 || toIndex < 0 ||
+          fromIndex >= list.length || toIndex >= list.length ||
+          fromIndex === toIndex
+        ) return;
+        const [moved] = list.splice(fromIndex, 1);
+        list.splice(toIndex, 0, moved);
+        list.forEach((t, i) => { t.order = i; });
+        saveState();
+        render();
       }
 
       function saveState() {
@@ -1451,16 +1513,13 @@
       }
 
       function renderOwnerSection(owner) {
-        const tasks = state.tasks.filter(t => t.ownerId === owner.id);
+        const tasks = getOwnerTasks(owner.id);
         const tint = tintColor(owner.color);
 
         return `
           <section class="owner-section"
             data-owner-id="${owner.id}"
-            style="--owner-color:${owner.color};--owner-tint:${tint};"
-            ondragover="window.__daylist.sectionDragOver(event)"
-            ondragleave="window.__daylist.sectionDragLeave(event)"
-            ondrop="window.__daylist.sectionDrop(event, '${owner.id}')">
+            style="--owner-color:${owner.color};--owner-tint:${tint};">
             <div class="owner-header">
               <div class="owner-title">
                 <span class="owner-dot" aria-hidden="true"></span>
@@ -1498,9 +1557,9 @@
                     <th class="col-actions">Acciones</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody data-owner-id="${owner.id}">
                   ${tasks.length
-                    ? tasks.map(t => renderTaskRow(t)).join("")
+                    ? tasks.map((t, i) => renderTaskRow(t, i, tasks.length)).join("")
                     : `<tr class="no-tasks"><td colspan="8">No hay tareas. Pulsa «Tarea» para crear una.</td></tr>`}
                 </tbody>
               </table>
@@ -1508,22 +1567,28 @@
           </section>`;
       }
 
-      function canDragTasks() {
+      function isDesktopReorder() {
         return window.matchMedia("(min-width: 901px)").matches;
       }
 
-      function renderTaskRow(task) {
+      function renderTaskRow(task, index, total) {
         const pClass = PRIORITY_CLASS[task.priority] || "badge-media";
         const eClass = ESTADO_CLASS[task.estado] || "badge-sin-comenzar";
         const product = task.producto
           ? `<a class="product-link" href="${escapeHtml(task.producto)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(task.producto)}">${ICONS.link} ${escapeHtml(truncateUrl(task.producto))}</a>`
           : `<span class="product-empty">Sin enlace</span>`;
-        const draggable = canDragTasks() ? "true" : "false";
+        const draggable = isDesktopReorder() ? "true" : "false";
+        const upDisabled = index === 0 ? "disabled" : "";
+        const downDisabled = index === total - 1 ? "disabled" : "";
 
         return `
           <tr draggable="${draggable}"
             data-task-id="${task.id}"
-            ondragstart="window.__daylist.rowDragStart(event, '${task.id}')"
+            data-owner-id="${task.ownerId}"
+            ondragstart="window.__daylist.rowDragStart(event, '${task.id}', '${task.ownerId}')"
+            ondragover="window.__daylist.rowDragOver(event)"
+            ondragleave="window.__daylist.rowDragLeave(event)"
+            ondrop="window.__daylist.rowDrop(event)"
             ondragend="window.__daylist.rowDragEnd(event)">
             <td class="col-task" data-label="Tarea"><div class="task-desc">${escapeHtml(task.desc)}</div></td>
             <td class="col-priority" data-label="Prioridad">
@@ -1550,8 +1615,13 @@
             <td class="col-producto" data-label="Producto final">${product}</td>
             <td class="col-actions" data-label="Acciones">
               <div class="actions-cell">
+                <div class="reorder-btns">
+                  <button type="button" class="btn-icon" title="Subir" ${upDisabled}
+                    data-action="reorder-up" data-task-id="${task.id}" aria-label="Subir tarea">${ICONS.arrowUp}</button>
+                  <button type="button" class="btn-icon" title="Bajar" ${downDisabled}
+                    data-action="reorder-down" data-task-id="${task.id}" aria-label="Bajar tarea">${ICONS.arrowDown}</button>
+                </div>
                 <button type="button" class="btn-icon" title="Editar" data-action="edit-task" data-task-id="${task.id}">${ICONS.edit}</button>
-                <button type="button" class="btn-icon" title="Mover" data-action="move-task" data-task-id="${task.id}">${ICONS.move}</button>
                 <button type="button" class="btn-icon danger" title="Eliminar" data-action="delete-task" data-task-id="${task.id}">${ICONS.trash}</button>
               </div>
             </td>
@@ -1632,10 +1702,19 @@
 
         if (id) {
           const task = state.tasks.find(t => t.id === id);
-          if (task) Object.assign(task, data);
+          if (task) {
+            const prevOwner = task.ownerId;
+            Object.assign(task, data);
+            delete task.sala;
+            if (prevOwner !== data.ownerId) {
+              const siblings = state.tasks.filter(t => t.ownerId === data.ownerId && t.id !== task.id);
+              task.order = siblings.length ? Math.max(...siblings.map(t => t.order ?? 0)) + 1 : 0;
+              reindexOwnerTasks(prevOwner);
+            }
+          }
           toast("Tarea actualizada");
         } else {
-          state.tasks.push({ id: uid("t"), ...data });
+          state.tasks.push({ id: uid("t"), order: nextTaskOrder(data.ownerId), ...data });
           toast("Tarea creada");
         }
 
@@ -1651,39 +1730,14 @@
           "Eliminar tarea",
           `¿Eliminar «${task.desc.slice(0, 60)}${task.desc.length > 60 ? "…" : ""}»?`,
           () => {
+            const ownerId = task.ownerId;
             state.tasks = state.tasks.filter(t => t.id !== taskId);
+            reindexOwnerTasks(ownerId);
             saveState();
             render();
             toast("Tarea eliminada");
           }
         );
-      }
-
-      /* ——— Move ——— */
-      function openMoveModal(taskId) {
-        const task = state.tasks.find(t => t.id === taskId);
-        if (!task) return;
-        const others = state.owners.filter(o => o.id !== task.ownerId);
-        if (!others.length) {
-          toast("No hay otros propietarios");
-          return;
-        }
-        document.getElementById("moveTaskId").value = taskId;
-        document.getElementById("moveTaskPreview").textContent =
-          `«${task.desc.slice(0, 80)}${task.desc.length > 80 ? "…" : ""}»`;
-        populateOwnerSelects(document.getElementById("moveOwnerSelect"), others[0].id, task.ownerId);
-        openModal("moveModal");
-      }
-
-      function moveTask(taskId, newOwnerId) {
-        const task = state.tasks.find(t => t.id === taskId);
-        if (!task || task.ownerId === newOwnerId) return;
-        const owner = state.owners.find(o => o.id === newOwnerId);
-        if (!owner) return;
-        task.ownerId = newOwnerId;
-        saveState();
-        render();
-        toast(`Movida a ${owner.name}`);
       }
 
       /* ——— Owner CRUD ——— */
@@ -1763,41 +1817,74 @@
         );
       }
 
-      /* ——— Drag & Drop ——— */
-      function rowDragStart(e, taskId) {
+      /* ——— Drag & Drop (reorder within owner, desktop) ——— */
+      function clearDragIndicators() {
+        document.querySelectorAll("tr.drag-over-above, tr.drag-over-below").forEach(el => {
+          el.classList.remove("drag-over-above", "drag-over-below");
+        });
+      }
+
+      function rowDragStart(e, taskId, ownerId) {
+        if (!isDesktopReorder()) {
+          e.preventDefault();
+          return;
+        }
+        if (e.target.closest("select, button, a, input, textarea")) {
+          e.preventDefault();
+          return;
+        }
         dragTaskId = taskId;
+        dragOwnerId = ownerId;
         e.dataTransfer.effectAllowed = "move";
         e.dataTransfer.setData("text/plain", taskId);
         e.target.closest("tr")?.classList.add("dragging");
       }
 
-      function rowDragEnd(e) {
-        e.target.closest("tr")?.classList.remove("dragging");
-        document.querySelectorAll(".owner-section.drop-target").forEach(el =>
-          el.classList.remove("drop-target")
-        );
-        dragTaskId = null;
-      }
-
-      function sectionDragOver(e) {
+      function rowDragOver(e) {
+        if (!dragTaskId || !isDesktopReorder()) return;
+        const tr = e.currentTarget;
+        if (!tr || tr.dataset.ownerId !== dragOwnerId || tr.dataset.taskId === dragTaskId) return;
         e.preventDefault();
         e.dataTransfer.dropEffect = "move";
-        const section = e.currentTarget;
-        if (section && dragTaskId) section.classList.add("drop-target");
+        clearDragIndicators();
+        const rect = tr.getBoundingClientRect();
+        const before = e.clientY < rect.top + rect.height / 2;
+        tr.classList.add(before ? "drag-over-above" : "drag-over-below");
+        tr.dataset.dropPos = before ? "before" : "after";
       }
 
-      function sectionDragLeave(e) {
-        const section = e.currentTarget;
-        if (!section.contains(e.relatedTarget)) {
-          section.classList.remove("drop-target");
+      function rowDragLeave(e) {
+        const tr = e.currentTarget;
+        if (!tr.contains(e.relatedTarget)) {
+          tr.classList.remove("drag-over-above", "drag-over-below");
+          delete tr.dataset.dropPos;
         }
       }
 
-      function sectionDrop(e, ownerId) {
+      function rowDrop(e) {
         e.preventDefault();
-        e.currentTarget.classList.remove("drop-target");
+        const tr = e.currentTarget;
+        const targetId = tr.dataset.taskId;
+        const ownerId = tr.dataset.ownerId;
         const taskId = e.dataTransfer.getData("text/plain") || dragTaskId;
-        if (taskId) moveTask(taskId, ownerId);
+        const dropPos = tr.dataset.dropPos || "before";
+        clearDragIndicators();
+        if (!taskId || !targetId || taskId === targetId || ownerId !== dragOwnerId) return;
+
+        const list = getOwnerTasks(ownerId);
+        const fromIndex = list.findIndex(t => t.id === taskId);
+        let toIndex = list.findIndex(t => t.id === targetId);
+        if (fromIndex < 0 || toIndex < 0) return;
+        if (dropPos === "after") toIndex += 1;
+        if (fromIndex < toIndex) toIndex -= 1;
+        reorderOwnerTask(ownerId, fromIndex, toIndex);
+      }
+
+      function rowDragEnd(e) {
+        e.target.closest("tr")?.classList.remove("dragging");
+        clearDragIndicators();
+        dragTaskId = null;
+        dragOwnerId = null;
       }
 
       /* ——— Event wiring ——— */
@@ -1813,13 +1900,6 @@
 
         document.getElementById("taskForm").addEventListener("submit", saveTask);
         document.getElementById("ownerForm").addEventListener("submit", saveOwner);
-        document.getElementById("moveForm").addEventListener("submit", (e) => {
-          e.preventDefault();
-          const taskId = document.getElementById("moveTaskId").value;
-          const ownerId = document.getElementById("moveOwnerSelect").value;
-          closeModal("moveModal");
-          moveTask(taskId, ownerId);
-        });
 
         document.getElementById("confirmOk").addEventListener("click", () => {
           closeModal("confirmModal");
@@ -1841,13 +1921,13 @@
 
         document.addEventListener("keydown", (e) => {
           if (e.key === "Escape") {
-            ["taskModal", "ownerModal", "moveModal", "confirmModal"].forEach(closeModal);
+            ["taskModal", "ownerModal", "confirmModal"].forEach(closeModal);
           }
         });
 
         document.getElementById("appMain").addEventListener("click", (e) => {
           const btn = e.target.closest("[data-action]");
-          if (!btn) return;
+          if (!btn || btn.disabled) return;
           const { action, ownerId, taskId } = btn.dataset;
 
           switch (action) {
@@ -1866,8 +1946,11 @@
             case "delete-task":
               deleteTask(taskId);
               break;
-            case "move-task":
-              openMoveModal(taskId);
+            case "reorder-up":
+              shiftTaskOrder(taskId, -1);
+              break;
+            case "reorder-down":
+              shiftTaskOrder(taskId, 1);
               break;
           }
         });
@@ -1876,10 +1959,10 @@
       /* Expose DnD handlers for inline attributes */
       window.__daylist = {
         rowDragStart,
-        rowDragEnd,
-        sectionDragOver,
-        sectionDragLeave,
-        sectionDrop
+        rowDragOver,
+        rowDragLeave,
+        rowDrop,
+        rowDragEnd
       };
 
       /* ——— Boot ——— */
@@ -1888,11 +1971,11 @@
       initEvents();
       render();
 
-      let lastCompact = !canDragTasks();
+      let lastDesktop = isDesktopReorder();
       window.addEventListener("resize", () => {
-        const compact = !canDragTasks();
-        if (compact !== lastCompact) {
-          lastCompact = compact;
+        const desktop = isDesktopReorder();
+        if (desktop !== lastDesktop) {
+          lastDesktop = desktop;
           render();
         }
       });
