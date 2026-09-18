@@ -1,0 +1,1902 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Tortuguitas Daylist</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("tortuguitas-daylist-theme");
+        if (t !== "light" && t !== "dark") {
+          t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f0f3f7;
+      --bg-accent: #e4ebf3;
+      --bg-end: #dce6f0;
+      --surface: #ffffff;
+      --surface-muted: #f8fafc;
+      --header-bg: rgba(255, 255, 255, 0.92);
+      --text: #1a2332;
+      --text-muted: #5a6a7e;
+      --border: #d5dde8;
+      --border-soft: #e8eef5;
+      --primary: #0d7377;
+      --primary-hover: #095c5f;
+      --danger: #c0392b;
+      --danger-hover: #a93226;
+      --danger-bg: #fdecea;
+      --danger-border: #f5c6c2;
+      --shadow: 0 1px 3px rgba(26, 35, 50, 0.06), 0 4px 16px rgba(26, 35, 50, 0.04);
+      --shadow-lg: 0 8px 32px rgba(26, 35, 50, 0.12);
+      --overlay: rgba(26, 35, 50, 0.45);
+      --row-even: rgba(0, 0, 0, 0.018);
+      --task-count-bg: rgba(255, 255, 255, 0.7);
+      --toast-bg: #1a2332;
+      --toast-text: #ffffff;
+      --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%235a6a7e' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      --swatch-ring: #ffffff;
+      --owner-tint-alpha: 0.14;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --font: "Inter", system-ui, -apple-system, sans-serif;
+      --header-h: 64px;
+      color-scheme: light;
+    }
+
+    html[data-theme="dark"] {
+      --bg: #0f1419;
+      --bg-accent: #151b23;
+      --bg-end: #1a222d;
+      --surface: #1c2430;
+      --surface-muted: #222b38;
+      --header-bg: rgba(28, 36, 48, 0.92);
+      --text: #e8eef5;
+      --text-muted: #9aa8bc;
+      --border: #2f3b4d;
+      --border-soft: #263041;
+      --primary: #2dd4bf;
+      --primary-hover: #5eead4;
+      --danger: #f87171;
+      --danger-hover: #fca5a5;
+      --danger-bg: rgba(248, 113, 113, 0.15);
+      --danger-border: rgba(248, 113, 113, 0.35);
+      --shadow: 0 1px 3px rgba(0, 0, 0, 0.35), 0 4px 16px rgba(0, 0, 0, 0.25);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.45);
+      --overlay: rgba(0, 0, 0, 0.65);
+      --row-even: rgba(255, 255, 255, 0.03);
+      --task-count-bg: rgba(0, 0, 0, 0.25);
+      --toast-bg: #e8eef5;
+      --toast-text: #0f1419;
+      --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239aa8bc' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      --swatch-ring: #1c2430;
+      --owner-tint-alpha: 0.22;
+      color-scheme: dark;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font);
+      background: linear-gradient(160deg, var(--bg) 0%, var(--bg-accent) 50%, var(--bg-end) 100%);
+      background-attachment: fixed;
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      transition: background 0.25s ease, color 0.25s ease;
+    }
+
+    /* ——— Header ——— */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: var(--header-h);
+      background: var(--header-bg);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      padding: 0 1.5rem;
+      box-shadow: var(--shadow);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      flex-shrink: 0;
+    }
+
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #0d7377, #14919b);
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: -0.02em;
+    }
+
+    .brand h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+    }
+
+    .brand span {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-top: -2px;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex: 1;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .header-tools {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .filter-group label {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    select, .btn, input[type="text"], input[type="date"], textarea {
+      font-family: inherit;
+      font-size: 0.875rem;
+    }
+
+    select {
+      appearance: none;
+      background: var(--surface) var(--select-arrow) no-repeat right 0.65rem center;
+      padding: 0.45rem 2rem 0.45rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    select:focus, input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(13, 115, 119, 0.15);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 0.9rem;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn:active { transform: scale(0.97); }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+    .btn-primary:hover { background: var(--primary-hover); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover {
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+    .btn-danger:hover { background: var(--danger-hover); }
+
+    .btn-icon {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      display: inline-grid;
+      place-items: center;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      flex-shrink: 0;
+    }
+    .btn-icon:hover {
+      background: var(--bg);
+      color: var(--text);
+      border-color: var(--border);
+    }
+    .btn-icon.danger:hover {
+      background: var(--danger-bg);
+      color: var(--danger);
+      border-color: var(--danger-border);
+    }
+    .btn-icon svg { width: 15px; height: 15px; }
+
+    .theme-toggle .icon-moon { display: none; }
+    html[data-theme="dark"] .theme-toggle .icon-sun { display: none; }
+    html[data-theme="dark"] .theme-toggle .icon-moon { display: block; }
+
+    /* ——— Main ——— */
+    .app-main {
+      padding: 1.5rem;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 4rem 1.5rem;
+      color: var(--text-muted);
+    }
+    .empty-state p { margin-top: 0.5rem; font-size: 0.9rem; }
+
+    /* ——— Owner Section ——— */
+    .owner-section {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 1.5rem;
+      border: 2px solid var(--owner-color, var(--border));
+      overflow: hidden;
+      animation: fadeIn 0.35s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .owner-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.85rem 1.15rem;
+      background: var(--owner-tint, #f5f7fa);
+      border-bottom: 1px solid color-mix(in srgb, var(--owner-color) 25%, transparent);
+      flex-wrap: wrap;
+    }
+
+    .owner-title {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      min-width: 0;
+    }
+
+    .owner-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--owner-color);
+      flex-shrink: 0;
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--owner-color) 25%, transparent);
+    }
+
+    .owner-title h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .task-count {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--task-count-bg);
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+    }
+
+    .owner-sede {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .owner-sede label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .owner-sede select {
+      padding: 0.25rem 1.6rem 0.25rem 0.55rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      min-height: 32px;
+      background-color: rgba(255, 255, 255, 0.75);
+      border-color: color-mix(in srgb, var(--owner-color) 35%, var(--border));
+    }
+
+    html[data-theme="dark"] .owner-sede select {
+      background-color: rgba(0, 0, 0, 0.25);
+    }
+
+    .owner-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      flex-shrink: 0;
+    }
+
+    .btn-add-task {
+      padding: 0.35rem 0.7rem;
+      font-size: 0.8rem;
+    }
+
+    /* ——— Table ——— */
+    .table-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1100px;
+      font-size: 0.84rem;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      background: var(--surface-muted);
+      text-align: left;
+      padding: 0.65rem 0.85rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border-soft);
+      transition: background 0.15s;
+    }
+    tbody tr:nth-child(even) { background: var(--row-even); }
+    tbody tr:hover { background: color-mix(in srgb, var(--owner-color, #0d7377) 6%, transparent); }
+    tbody tr.dragging { opacity: 0.45; }
+    tbody tr.drag-over {
+      outline: 2px dashed var(--owner-color, var(--primary));
+      outline-offset: -2px;
+    }
+
+    td {
+      padding: 0.55rem 0.85rem;
+      vertical-align: middle;
+    }
+
+    .col-task { min-width: 220px; max-width: 320px; }
+    .col-priority, .col-estado { min-width: 130px; }
+    .col-date { min-width: 100px; white-space: nowrap; }
+    .col-date-short { min-width: 70px; white-space: nowrap; }
+    .col-producto { min-width: 140px; }
+    .col-actions { min-width: 110px; white-space: nowrap; }
+
+    .task-desc {
+      font-weight: 500;
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    /* ——— Badges & inline selects ——— */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      white-space: nowrap;
+      border: 1px solid transparent;
+    }
+
+    .badge-urgente { background: #fde8e8; color: #9b1c1c; border-color: #f8b4b4; }
+    .badge-alta { background: #feecdc; color: #9a3412; border-color: #fbd38d; }
+    .badge-media { background: #fef9c3; color: #854d0e; border-color: #fde047; }
+    .badge-baja { background: #e0f2fe; color: #075985; border-color: #7dd3fc; }
+    .badge-finalizado { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
+
+    .badge-sin-comenzar { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
+    .badge-en-curso { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
+    .badge-completado { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
+    .badge-bloqueado { background: #fce7f3; color: #9d174d; border-color: #f9a8d4; }
+
+    html[data-theme="dark"] .badge-urgente { background: rgba(248,113,113,0.18); color: #fca5a5; border-color: rgba(248,113,113,0.35); }
+    html[data-theme="dark"] .badge-alta { background: rgba(251,146,60,0.18); color: #fdba74; border-color: rgba(251,146,60,0.35); }
+    html[data-theme="dark"] .badge-media { background: rgba(250,204,21,0.15); color: #fde047; border-color: rgba(250,204,21,0.3); }
+    html[data-theme="dark"] .badge-baja { background: rgba(56,189,248,0.15); color: #7dd3fc; border-color: rgba(56,189,248,0.3); }
+    html[data-theme="dark"] .badge-finalizado { background: rgba(52,211,153,0.15); color: #6ee7b7; border-color: rgba(52,211,153,0.3); }
+    html[data-theme="dark"] .badge-sin-comenzar { background: rgba(148,163,184,0.15); color: #cbd5e1; border-color: rgba(148,163,184,0.3); }
+    html[data-theme="dark"] .badge-en-curso { background: rgba(96,165,250,0.18); color: #93c5fd; border-color: rgba(96,165,250,0.35); }
+    html[data-theme="dark"] .badge-completado { background: rgba(52,211,153,0.15); color: #6ee7b7; border-color: rgba(52,211,153,0.3); }
+    html[data-theme="dark"] .badge-bloqueado { background: rgba(244,114,182,0.18); color: #f9a8d4; border-color: rgba(244,114,182,0.35); }
+
+    .inline-select {
+      width: 100%;
+      max-width: 140px;
+      padding: 0.3rem 1.6rem 0.3rem 0.5rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      background-size: 10px;
+      background-position: right 0.4rem center;
+    }
+
+    .cell-date {
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+      font-size: 0.82rem;
+    }
+    .cell-date.empty { color: var(--text-muted); }
+
+    .product-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      color: var(--primary);
+      font-weight: 500;
+      text-decoration: none;
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .product-link:hover { text-decoration: underline; }
+    .product-empty { color: var(--text-muted); font-size: 0.8rem; }
+
+    .actions-cell {
+      display: flex;
+      align-items: center;
+      gap: 0.15rem;
+    }
+
+    .no-tasks td {
+      text-align: center;
+      padding: 1.75rem;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    /* Drop zone when dragging onto owner */
+    .owner-section.drop-target {
+      box-shadow: 0 0 0 3px var(--owner-color), var(--shadow-lg);
+    }
+
+    /* ——— Modal ——— */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--overlay);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+    }
+    .modal-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+      transform: translateY(12px) scale(0.98);
+      transition: transform 0.2s;
+    }
+    .modal-overlay.open .modal {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.1rem 1.25rem;
+      border-bottom: 1px solid var(--border-soft);
+    }
+    .modal-header h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    .modal-body {
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .form-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .form-row label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .form-row input,
+    .form-row select,
+    .form-row textarea {
+      padding: 0.55rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text);
+      width: 100%;
+    }
+
+    .form-row textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .color-swatches {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .color-swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .color-swatch:hover { transform: scale(1.1); }
+    .color-swatch.selected {
+      box-shadow: 0 0 0 2px var(--swatch-ring), 0 0 0 4px var(--text);
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      padding: 1rem 1.25rem;
+      border-top: 1px solid var(--border-soft);
+      background: var(--surface-muted);
+    }
+
+    /* ——— Toast ——— */
+    .toast-container {
+      position: fixed;
+      bottom: 1.25rem;
+      right: 1.25rem;
+      z-index: 300;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .toast {
+      background: var(--toast-bg);
+      color: var(--toast-text);
+      padding: 0.7rem 1.1rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 500;
+      box-shadow: var(--shadow-lg);
+      animation: toastIn 0.3s ease;
+      max-width: 300px;
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ——— Responsive ——— */
+    @media (max-width: 1024px) {
+      .app-main { padding: 1.15rem; }
+      table { min-width: 980px; font-size: 0.8rem; }
+      .col-task { min-width: 180px; max-width: 240px; }
+    }
+
+    @media (max-width: 900px) {
+      .app-header {
+        height: auto;
+        min-height: unset;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas:
+          "brand theme"
+          "tools tools";
+        align-items: center;
+        column-gap: 0.75rem;
+        row-gap: 0.65rem;
+        padding: 0.75rem 1rem;
+        padding-left: max(1rem, env(safe-area-inset-left));
+        padding-right: max(1rem, env(safe-area-inset-right));
+      }
+
+      .brand {
+        grid-area: brand;
+        min-width: 0;
+        align-self: center;
+      }
+
+      .brand h1 { font-size: 1rem; }
+      .brand span { display: none; }
+
+      .header-controls {
+        display: contents;
+      }
+
+      .header-tools {
+        grid-area: tools;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 0.5rem;
+        width: 100%;
+        flex-wrap: nowrap;
+      }
+
+      #btnTheme {
+        grid-area: theme;
+        align-self: center;
+        width: 40px;
+        height: 40px;
+      }
+
+      .filter-group {
+        min-width: 0;
+        flex: 0 1 auto;
+      }
+
+      .filter-group label { display: none; }
+
+      .filter-group select {
+        width: auto;
+        min-width: 132px;
+        max-width: 180px;
+        min-height: 40px;
+      }
+
+      .header-tools .btn {
+        justify-content: center;
+        min-height: 40px;
+        flex-shrink: 0;
+      }
+
+      .app-main {
+        padding: 0.85rem;
+        padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+        padding-left: max(0.85rem, env(safe-area-inset-left));
+        padding-right: max(0.85rem, env(safe-area-inset-right));
+      }
+
+      .owner-section { margin-bottom: 1rem; border-radius: 10px; }
+
+      .owner-header {
+        padding: 0.75rem;
+        gap: 0.65rem;
+      }
+
+      .owner-title {
+        width: 100%;
+        flex-wrap: wrap;
+      }
+
+      .owner-title h2 {
+        font-size: 0.95rem;
+        white-space: normal;
+      }
+
+      .owner-actions { margin-left: auto; }
+
+      /* Card layout instead of wide table */
+      .table-wrap {
+        overflow: visible;
+        -webkit-overflow-scrolling: auto;
+      }
+
+      table {
+        min-width: 0;
+        width: 100%;
+        font-size: 0.84rem;
+      }
+
+      thead { display: none; }
+
+      tbody {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 0.75rem;
+      }
+
+      tbody tr {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.7rem 0.75rem;
+        padding: 0.9rem;
+        background: var(--surface-muted);
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-sm);
+        border-bottom: 1px solid var(--border-soft);
+      }
+
+      tbody tr:nth-child(even) { background: var(--surface-muted); }
+      tbody tr:hover { background: color-mix(in srgb, var(--owner-color, #0d7377) 10%, var(--surface-muted)); }
+
+      tbody tr.no-tasks {
+        display: block;
+        text-align: center;
+        background: transparent;
+        border-style: dashed;
+      }
+
+      tbody tr.no-tasks td {
+        display: block;
+        padding: 1.25rem 0.5rem;
+      }
+
+      tbody tr.no-tasks td::before { display: none; }
+
+      td {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.3rem;
+        padding: 0;
+        min-width: 0 !important;
+        max-width: none !important;
+        white-space: normal;
+      }
+
+      td::before {
+        content: attr(data-label);
+        font-size: 0.68rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--text-muted);
+      }
+
+      td.col-task {
+        grid-column: 1 / -1;
+        padding-bottom: 0.35rem;
+        border-bottom: 1px solid var(--border-soft);
+        margin-bottom: 0.1rem;
+      }
+
+      td.col-task::before { display: none; }
+
+      td.col-producto {
+        grid-column: 1 / -1;
+      }
+
+      td.col-actions {
+        grid-column: 1 / -1;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-end;
+        padding-top: 0.55rem;
+        border-top: 1px solid var(--border-soft);
+        margin-top: 0.1rem;
+      }
+
+      td.col-actions::before { display: none; }
+
+      .task-desc {
+        font-size: 0.92rem;
+        line-height: 1.4;
+      }
+
+      .inline-select {
+        max-width: none;
+        width: 100%;
+        min-height: 40px;
+        font-size: 0.82rem;
+        padding: 0.4rem 1.75rem 0.4rem 0.55rem;
+      }
+
+      .product-link { max-width: 100%; }
+
+      .actions-cell {
+        width: 100%;
+        justify-content: flex-end;
+        gap: 0.25rem;
+      }
+
+      .actions-cell .btn-icon {
+        width: 42px;
+        height: 42px;
+      }
+
+      .form-grid { grid-template-columns: 1fr; }
+
+      .modal-overlay {
+        padding: 0;
+        align-items: flex-end;
+      }
+
+      .modal {
+        max-width: 100%;
+        max-height: min(92vh, 100%);
+        border-radius: var(--radius) var(--radius) 0 0;
+        transform: translateY(24px);
+      }
+
+      .modal-overlay.open .modal {
+        transform: translateY(0);
+      }
+
+      .modal-body {
+        padding: 1rem;
+      }
+
+      .form-row input,
+      .form-row select,
+      .form-row textarea {
+        min-height: 44px;
+        font-size: 16px; /* evita zoom automático en iOS */
+      }
+
+      .form-row textarea { min-height: 96px; }
+
+      .modal-footer {
+        padding: 0.85rem 1rem;
+        padding-bottom: max(0.85rem, env(safe-area-inset-bottom));
+        gap: 0.5rem;
+      }
+
+      .modal-footer .btn {
+        flex: 1;
+        justify-content: center;
+        min-height: 44px;
+      }
+
+      .toast-container {
+        left: 0.75rem;
+        right: 0.75rem;
+        bottom: max(1rem, env(safe-area-inset-bottom));
+        align-items: stretch;
+      }
+
+      .toast {
+        max-width: none;
+        text-align: center;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .header-tools .btn .btn-label { display: none; }
+      .header-tools .btn {
+        width: 40px;
+        padding: 0;
+      }
+
+      .filter-group select {
+        min-width: 0;
+        max-width: min(170px, 52vw);
+        flex: 1 1 auto;
+      }
+
+      .owner-actions {
+        width: 100%;
+        justify-content: flex-end;
+      }
+
+      .btn-add-task {
+        flex: 1;
+        justify-content: center;
+        min-height: 40px;
+      }
+
+      .owner-title {
+        row-gap: 0.45rem;
+      }
+
+      .owner-sede {
+        width: 100%;
+      }
+
+      .owner-sede select {
+        flex: 1;
+        min-height: 36px;
+      }
+
+      /* Mantener 2 columnas en el contenido de cada tarea */
+      tbody tr {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.65rem 0.7rem;
+      }
+
+      td.col-task,
+      td.col-producto,
+      td.col-actions {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (min-width: 601px) and (max-width: 900px) {
+      tbody {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+      }
+
+      tbody tr.no-tasks {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .brand-mark { width: 32px; height: 32px; font-size: 0.75rem; }
+      .brand h1 { font-size: 0.9rem; }
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-mark">TD</div>
+      <div>
+        <h1>Tortuguitas Daylist</h1>
+        <span>Gestión diaria del equipo</span>
+      </div>
+    </div>
+    <div class="header-controls">
+      <div class="header-tools">
+        <div class="filter-group">
+          <label for="ownerFilter">Propietario</label>
+          <select id="ownerFilter" aria-label="Filtrar por propietario">
+            <option value="all">Todos</option>
+          </select>
+        </div>
+        <button type="button" class="btn btn-ghost" id="btnAddOwner" title="Añadir propietario">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+          <span class="btn-label">Propietario</span>
+        </button>
+      </div>
+      <button type="button" class="btn-icon theme-toggle" id="btnTheme" title="Cambiar tema" aria-label="Cambiar tema claro u oscuro">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 14.5A8.5 8.5 0 1 1 9.5 3a7 7 0 0 0 11.5 11.5z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="app-main" id="appMain"></main>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Task Modal -->
+  <div class="modal-overlay" id="taskModal" role="dialog" aria-modal="true" aria-labelledby="taskModalTitle">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="taskModalTitle">Nueva tarea</h3>
+        <button type="button" class="btn-icon" data-close-modal="taskModal" aria-label="Cerrar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <form id="taskForm">
+        <div class="modal-body">
+          <input type="hidden" id="taskId" />
+          <div class="form-row">
+            <label for="taskDesc">Tarea *</label>
+            <textarea id="taskDesc" required placeholder="Descripción de la tarea…"></textarea>
+          </div>
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="taskOwner">Propietario *</label>
+              <select id="taskOwner" required></select>
+            </div>
+            <div class="form-row">
+              <label for="taskPriority">Prioridad</label>
+              <select id="taskPriority">
+                <option value="Urgente">Urgente</option>
+                <option value="Alta">Alta</option>
+                <option value="Media" selected>Media</option>
+                <option value="Baja">Baja</option>
+                <option value="Finalizado">Finalizado</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label for="taskEstado">Estado</label>
+              <select id="taskEstado">
+                <option value="Sin Comenzar" selected>Sin Comenzar</option>
+                <option value="En Curso">En Curso</option>
+                <option value="Completado">Completado</option>
+                <option value="Bloqueado">Bloqueado</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label for="taskStart">Fecha de inicio</label>
+              <input type="date" id="taskStart" />
+            </div>
+            <div class="form-row">
+              <label for="taskDeadline">Fecha límite</label>
+              <input type="date" id="taskDeadline" />
+            </div>
+            <div class="form-row">
+              <label for="taskEnd">Fecha de finalización</label>
+              <input type="date" id="taskEnd" />
+            </div>
+            <div class="form-row">
+              <label for="taskProducto">Producto final (URL)</label>
+              <input type="url" id="taskProducto" placeholder="https://…" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" data-close-modal="taskModal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Owner Modal -->
+  <div class="modal-overlay" id="ownerModal" role="dialog" aria-modal="true" aria-labelledby="ownerModalTitle">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="ownerModalTitle">Añadir propietario</h3>
+        <button type="button" class="btn-icon" data-close-modal="ownerModal" aria-label="Cerrar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <form id="ownerForm">
+        <div class="modal-body">
+          <input type="hidden" id="ownerId" />
+          <div class="form-row">
+            <label for="ownerName">Nombre *</label>
+            <input type="text" id="ownerName" required placeholder="Nombre completo" maxlength="80" />
+          </div>
+          <div class="form-row">
+            <label for="ownerSala">Sede</label>
+            <select id="ownerSala">
+              <option value="Florida">Florida</option>
+              <option value="Adrogué">Adrogué</option>
+              <option value="Merlo">Merlo</option>
+              <option value="Próximamente">Próximamente</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>Color</label>
+            <div class="color-swatches" id="colorSwatches"></div>
+            <input type="hidden" id="ownerColor" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" data-close-modal="ownerModal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Move Task Modal -->
+  <div class="modal-overlay" id="moveModal" role="dialog" aria-modal="true" aria-labelledby="moveModalTitle">
+    <div class="modal" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3 id="moveModalTitle">Mover tarea</h3>
+        <button type="button" class="btn-icon" data-close-modal="moveModal" aria-label="Cerrar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <form id="moveForm">
+        <div class="modal-body">
+          <input type="hidden" id="moveTaskId" />
+          <p id="moveTaskPreview" style="font-size:0.875rem;color:var(--text-muted);margin-bottom:0.5rem;"></p>
+          <div class="form-row">
+            <label for="moveOwnerSelect">Nuevo propietario</label>
+            <select id="moveOwnerSelect" required></select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" data-close-modal="moveModal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Mover</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Confirm Modal -->
+  <div class="modal-overlay" id="confirmModal" role="dialog" aria-modal="true">
+    <div class="modal" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3 id="confirmTitle">Confirmar</h3>
+        <button type="button" class="btn-icon" data-close-modal="confirmModal" aria-label="Cerrar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p id="confirmMessage" style="font-size:0.9rem;color:var(--text-muted);"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" data-close-modal="confirmModal">Cancelar</button>
+        <button type="button" class="btn btn-danger" id="confirmOk">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const STORAGE_KEY = "tortuguitas-daylist-v1";
+      const THEME_KEY = "tortuguitas-daylist-theme";
+
+      const OWNER_PALETTE = [
+        "#0d7377", "#c45c26", "#3b6ea5", "#7b4b94",
+        "#2d8a5e", "#b53d5a", "#5c6bc0", "#00897b",
+        "#d4a017", "#546e7a"
+      ];
+
+      const DEFAULT_OWNERS = [
+        { id: "o1", name: "Agustina Castillo", color: OWNER_PALETTE[0], sala: "Florida" },
+        { id: "o2", name: "Agustín Márquez", color: OWNER_PALETTE[1], sala: "Florida" },
+        { id: "o3", name: "Kevin García", color: OWNER_PALETTE[2], sala: "Adrogué" },
+        { id: "o4", name: "Rafael Barberi", color: OWNER_PALETTE[3], sala: "Florida" },
+        { id: "o5", name: "Gustavo Sotelo", color: OWNER_PALETTE[4], sala: "Merlo" },
+        { id: "o6", name: "Albana Pais", color: OWNER_PALETTE[5], sala: "Adrogué" }
+      ];
+
+      const PRIORITY_CLASS = {
+        "Urgente": "badge-urgente",
+        "Alta": "badge-alta",
+        "Media": "badge-media",
+        "Baja": "badge-baja",
+        "Finalizado": "badge-finalizado"
+      };
+
+      const ESTADO_CLASS = {
+        "Sin Comenzar": "badge-sin-comenzar",
+        "En Curso": "badge-en-curso",
+        "Completado": "badge-completado",
+        "Bloqueado": "badge-bloqueado"
+      };
+
+      const PRIORITIES = ["Urgente", "Alta", "Media", "Baja", "Finalizado"];
+      const SALAS = ["Florida", "Adrogué", "Merlo", "Próximamente"];
+      const ESTADOS = ["Sin Comenzar", "En Curso", "Completado", "Bloqueado"];
+
+      const ICONS = {
+        edit: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
+        trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`,
+        move: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 9 2 12 5 15"/><polyline points="19 15 22 12 19 9"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`,
+        link: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`,
+        plus: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`
+      };
+
+      /** @type {{ owners: Array<{id:string,name:string,color:string,sala:string}>, tasks: Array<Object>, filter: string }} */
+      let state = { owners: [], tasks: [], filter: "all" };
+      let confirmCallback = null;
+      let dragTaskId = null;
+
+      /* ——— Persistence ——— */
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed.owners?.length) {
+              state.owners = parsed.owners.map(normalizeOwner);
+              state.tasks = (parsed.tasks || []).map(normalizeTask);
+              state.filter = parsed.filter || "all";
+              return;
+            }
+          }
+        } catch (_) { /* ignore corrupt data */ }
+        state = { owners: structuredClone(DEFAULT_OWNERS), tasks: [], filter: "all" };
+        saveState();
+      }
+
+      function normalizeOwner(owner) {
+        return {
+          id: owner.id,
+          name: owner.name,
+          color: owner.color || OWNER_PALETTE[0],
+          sala: SALAS.includes(owner.sala) ? owner.sala : "Florida"
+        };
+      }
+
+      function normalizeTask(task) {
+        const { sala, ...rest } = task;
+        return rest;
+      }
+
+      function saveState() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          owners: state.owners,
+          tasks: state.tasks,
+          filter: state.filter
+        }));
+      }
+
+      function uid(prefix) {
+        return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+      }
+
+      function tintColor(hex) {
+        const alpha = getComputedStyle(document.documentElement)
+          .getPropertyValue("--owner-tint-alpha").trim() || "0.14";
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+      }
+
+      /* ——— Theme ——— */
+      function getPreferredTheme() {
+        const saved = localStorage.getItem(THEME_KEY);
+        if (saved === "light" || saved === "dark") return saved;
+        return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+
+      function applyTheme(theme) {
+        document.documentElement.setAttribute("data-theme", theme);
+        localStorage.setItem(THEME_KEY, theme);
+        const btn = document.getElementById("btnTheme");
+        if (btn) {
+          btn.title = theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro";
+          btn.setAttribute("aria-label", btn.title);
+        }
+      }
+
+      function toggleTheme() {
+        const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+        applyTheme(next);
+        render();
+      }
+
+      /* ——— Dates ——— */
+      function toInputDate(iso) {
+        if (!iso) return "";
+        return iso.slice(0, 10);
+      }
+
+      function fromInputDate(val) {
+        return val || "";
+      }
+
+      function formatDDMMYYYY(iso) {
+        if (!iso) return "—";
+        const [y, m, d] = iso.split("-");
+        if (!y || !m || !d) return "—";
+        return `${d}/${m}/${y}`;
+      }
+
+      function formatDDMM(iso) {
+        if (!iso) return "—";
+        const parts = iso.split("-");
+        if (parts.length < 3) return "—";
+        return `${parts[2]}/${parts[1]}`;
+      }
+
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function truncateUrl(url, max = 28) {
+        try {
+          const u = new URL(url);
+          const display = u.hostname + u.pathname;
+          return display.length > max ? display.slice(0, max) + "…" : display;
+        } catch {
+          return url.length > max ? url.slice(0, max) + "…" : url;
+        }
+      }
+
+      /* ——— Toast ——— */
+      function toast(msg) {
+        const el = document.createElement("div");
+        el.className = "toast";
+        el.textContent = msg;
+        document.getElementById("toastContainer").appendChild(el);
+        setTimeout(() => {
+          el.style.opacity = "0";
+          el.style.transition = "opacity 0.3s";
+          setTimeout(() => el.remove(), 300);
+        }, 2200);
+      }
+
+      /* ——— Modals ——— */
+      function openModal(id) {
+        document.getElementById(id).classList.add("open");
+      }
+
+      function closeModal(id) {
+        document.getElementById(id).classList.remove("open");
+      }
+
+      function askConfirm(title, message, onOk) {
+        document.getElementById("confirmTitle").textContent = title;
+        document.getElementById("confirmMessage").textContent = message;
+        confirmCallback = onOk;
+        openModal("confirmModal");
+      }
+
+      /* ——— Filter ——— */
+      function populateFilter() {
+        const sel = document.getElementById("ownerFilter");
+        const current = state.filter;
+        sel.innerHTML = `<option value="all">Todos</option>` +
+          state.owners.map(o =>
+            `<option value="${o.id}" ${o.id === current ? "selected" : ""}>${escapeHtml(o.name)}</option>`
+          ).join("");
+        if (current !== "all" && !state.owners.some(o => o.id === current)) {
+          state.filter = "all";
+          sel.value = "all";
+        } else {
+          sel.value = current;
+        }
+      }
+
+      function populateOwnerSelects(selectEl, selectedId, excludeId) {
+        selectEl.innerHTML = state.owners
+          .filter(o => o.id !== excludeId)
+          .map(o =>
+            `<option value="${o.id}" ${o.id === selectedId ? "selected" : ""}>${escapeHtml(o.name)}</option>`
+          ).join("");
+      }
+
+      /* ——— Render ——— */
+      function render() {
+        populateFilter();
+        const main = document.getElementById("appMain");
+        const owners = state.filter === "all"
+          ? state.owners
+          : state.owners.filter(o => o.id === state.filter);
+
+        if (!state.owners.length) {
+          main.innerHTML = `
+            <div class="empty-state">
+              <h2>Sin propietarios</h2>
+              <p>Añade un propietario para empezar a gestionar tareas.</p>
+            </div>`;
+          return;
+        }
+
+        if (!owners.length) {
+          main.innerHTML = `
+            <div class="empty-state">
+              <h2>Sin resultados</h2>
+              <p>No hay propietarios que coincidan con el filtro.</p>
+            </div>`;
+          return;
+        }
+
+        main.innerHTML = owners.map(owner => renderOwnerSection(owner)).join("");
+        bindSectionEvents();
+      }
+
+      function renderOwnerSection(owner) {
+        const tasks = state.tasks.filter(t => t.ownerId === owner.id);
+        const tint = tintColor(owner.color);
+
+        return `
+          <section class="owner-section"
+            data-owner-id="${owner.id}"
+            style="--owner-color:${owner.color};--owner-tint:${tint};"
+            ondragover="window.__daylist.sectionDragOver(event)"
+            ondragleave="window.__daylist.sectionDragLeave(event)"
+            ondrop="window.__daylist.sectionDrop(event, '${owner.id}')">
+            <div class="owner-header">
+              <div class="owner-title">
+                <span class="owner-dot" aria-hidden="true"></span>
+                <h2>${escapeHtml(owner.name)}</h2>
+                <span class="task-count">${tasks.length} tarea${tasks.length !== 1 ? "s" : ""}</span>
+                <div class="owner-sede">
+                  <label for="sede-${owner.id}">Sede</label>
+                  <select id="sede-${owner.id}" data-owner-field="sala" data-owner-id="${owner.id}" aria-label="Sede de ${escapeHtml(owner.name)}">
+                    ${SALAS.map(s => `<option value="${s}" ${s === (owner.sala || "Florida") ? "selected" : ""}>${s}</option>`).join("")}
+                  </select>
+                </div>
+              </div>
+              <div class="owner-actions">
+                <button type="button" class="btn btn-ghost btn-add-task"
+                  data-action="add-task-owner" data-owner-id="${owner.id}">
+                  ${ICONS.plus} Tarea
+                </button>
+                <button type="button" class="btn-icon" title="Editar propietario"
+                  data-action="edit-owner" data-owner-id="${owner.id}">${ICONS.edit}</button>
+                <button type="button" class="btn-icon danger" title="Eliminar propietario"
+                  data-action="delete-owner" data-owner-id="${owner.id}">${ICONS.trash}</button>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="col-task">Tarea</th>
+                    <th class="col-priority">Prioridad</th>
+                    <th class="col-estado">Estado</th>
+                    <th class="col-date">Fecha inicio</th>
+                    <th class="col-date-short">Fecha límite</th>
+                    <th class="col-date">Finalización</th>
+                    <th class="col-producto">Producto final</th>
+                    <th class="col-actions">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${tasks.length
+                    ? tasks.map(t => renderTaskRow(t)).join("")
+                    : `<tr class="no-tasks"><td colspan="8">No hay tareas. Pulsa «Tarea» para crear una.</td></tr>`}
+                </tbody>
+              </table>
+            </div>
+          </section>`;
+      }
+
+      function canDragTasks() {
+        return window.matchMedia("(min-width: 901px)").matches;
+      }
+
+      function renderTaskRow(task) {
+        const pClass = PRIORITY_CLASS[task.priority] || "badge-media";
+        const eClass = ESTADO_CLASS[task.estado] || "badge-sin-comenzar";
+        const product = task.producto
+          ? `<a class="product-link" href="${escapeHtml(task.producto)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(task.producto)}">${ICONS.link} ${escapeHtml(truncateUrl(task.producto))}</a>`
+          : `<span class="product-empty">Sin enlace</span>`;
+        const draggable = canDragTasks() ? "true" : "false";
+
+        return `
+          <tr draggable="${draggable}"
+            data-task-id="${task.id}"
+            ondragstart="window.__daylist.rowDragStart(event, '${task.id}')"
+            ondragend="window.__daylist.rowDragEnd(event)">
+            <td class="col-task" data-label="Tarea"><div class="task-desc">${escapeHtml(task.desc)}</div></td>
+            <td class="col-priority" data-label="Prioridad">
+              <select class="inline-select ${pClass}" data-field="priority" data-task-id="${task.id}"
+                aria-label="Prioridad">
+                ${PRIORITIES.map(p => `<option value="${p}" ${p === task.priority ? "selected" : ""}>${p}</option>`).join("")}
+              </select>
+            </td>
+            <td class="col-estado" data-label="Estado">
+              <select class="inline-select ${eClass}" data-field="estado" data-task-id="${task.id}"
+                aria-label="Estado">
+                ${ESTADOS.map(e => `<option value="${e}" ${e === task.estado ? "selected" : ""}>${e}</option>`).join("")}
+              </select>
+            </td>
+            <td class="col-date" data-label="Fecha de inicio">
+              <span class="cell-date ${task.startDate ? "" : "empty"}">${formatDDMMYYYY(task.startDate)}</span>
+            </td>
+            <td class="col-date-short" data-label="Fecha límite">
+              <span class="cell-date ${task.deadline ? "" : "empty"}">${formatDDMM(task.deadline)}</span>
+            </td>
+            <td class="col-date" data-label="Fecha de finalización">
+              <span class="cell-date ${task.endDate ? "" : "empty"}">${formatDDMMYYYY(task.endDate)}</span>
+            </td>
+            <td class="col-producto" data-label="Producto final">${product}</td>
+            <td class="col-actions" data-label="Acciones">
+              <div class="actions-cell">
+                <button type="button" class="btn-icon" title="Editar" data-action="edit-task" data-task-id="${task.id}">${ICONS.edit}</button>
+                <button type="button" class="btn-icon" title="Mover" data-action="move-task" data-task-id="${task.id}">${ICONS.move}</button>
+                <button type="button" class="btn-icon danger" title="Eliminar" data-action="delete-task" data-task-id="${task.id}">${ICONS.trash}</button>
+              </div>
+            </td>
+          </tr>`;
+      }
+
+      function bindSectionEvents() {
+        document.querySelectorAll("select[data-field]").forEach(sel => {
+          sel.addEventListener("change", (e) => {
+            const taskId = e.target.dataset.taskId;
+            const field = e.target.dataset.field;
+            const task = state.tasks.find(t => t.id === taskId);
+            if (!task) return;
+            task[field] = e.target.value;
+            saveState();
+            render();
+            toast("Tarea actualizada");
+          });
+        });
+
+        document.querySelectorAll("select[data-owner-field]").forEach(sel => {
+          sel.addEventListener("change", (e) => {
+            const ownerId = e.target.dataset.ownerId;
+            const field = e.target.dataset.ownerField;
+            const owner = state.owners.find(o => o.id === ownerId);
+            if (!owner) return;
+            owner[field] = e.target.value;
+            saveState();
+            toast("Sede actualizada");
+          });
+        });
+      }
+
+      /* ——— Task CRUD ——— */
+      function openTaskModal(task = null, preselectOwnerId = null) {
+        const form = document.getElementById("taskForm");
+        form.reset();
+        document.getElementById("taskModalTitle").textContent = task ? "Editar tarea" : "Nueva tarea";
+        document.getElementById("taskId").value = task?.id || "";
+
+        populateOwnerSelects(
+          document.getElementById("taskOwner"),
+          task?.ownerId || preselectOwnerId || state.owners[0]?.id
+        );
+
+        if (task) {
+          document.getElementById("taskDesc").value = task.desc;
+          document.getElementById("taskPriority").value = task.priority;
+          document.getElementById("taskEstado").value = task.estado;
+          document.getElementById("taskStart").value = toInputDate(task.startDate);
+          document.getElementById("taskDeadline").value = toInputDate(task.deadline);
+          document.getElementById("taskEnd").value = toInputDate(task.endDate);
+          document.getElementById("taskProducto").value = task.producto || "";
+        } else {
+          document.getElementById("taskPriority").value = "Media";
+          document.getElementById("taskEstado").value = "Sin Comenzar";
+        }
+
+        openModal("taskModal");
+        setTimeout(() => document.getElementById("taskDesc").focus(), 50);
+      }
+
+      function saveTask(e) {
+        e.preventDefault();
+        const id = document.getElementById("taskId").value;
+        const data = {
+          desc: document.getElementById("taskDesc").value.trim(),
+          ownerId: document.getElementById("taskOwner").value,
+          priority: document.getElementById("taskPriority").value,
+          estado: document.getElementById("taskEstado").value,
+          startDate: fromInputDate(document.getElementById("taskStart").value),
+          deadline: fromInputDate(document.getElementById("taskDeadline").value),
+          endDate: fromInputDate(document.getElementById("taskEnd").value),
+          producto: document.getElementById("taskProducto").value.trim()
+        };
+
+        if (!data.desc) return;
+
+        if (id) {
+          const task = state.tasks.find(t => t.id === id);
+          if (task) Object.assign(task, data);
+          toast("Tarea actualizada");
+        } else {
+          state.tasks.push({ id: uid("t"), ...data });
+          toast("Tarea creada");
+        }
+
+        saveState();
+        closeModal("taskModal");
+        render();
+      }
+
+      function deleteTask(taskId) {
+        const task = state.tasks.find(t => t.id === taskId);
+        if (!task) return;
+        askConfirm(
+          "Eliminar tarea",
+          `¿Eliminar «${task.desc.slice(0, 60)}${task.desc.length > 60 ? "…" : ""}»?`,
+          () => {
+            state.tasks = state.tasks.filter(t => t.id !== taskId);
+            saveState();
+            render();
+            toast("Tarea eliminada");
+          }
+        );
+      }
+
+      /* ——— Move ——— */
+      function openMoveModal(taskId) {
+        const task = state.tasks.find(t => t.id === taskId);
+        if (!task) return;
+        const others = state.owners.filter(o => o.id !== task.ownerId);
+        if (!others.length) {
+          toast("No hay otros propietarios");
+          return;
+        }
+        document.getElementById("moveTaskId").value = taskId;
+        document.getElementById("moveTaskPreview").textContent =
+          `«${task.desc.slice(0, 80)}${task.desc.length > 80 ? "…" : ""}»`;
+        populateOwnerSelects(document.getElementById("moveOwnerSelect"), others[0].id, task.ownerId);
+        openModal("moveModal");
+      }
+
+      function moveTask(taskId, newOwnerId) {
+        const task = state.tasks.find(t => t.id === taskId);
+        if (!task || task.ownerId === newOwnerId) return;
+        const owner = state.owners.find(o => o.id === newOwnerId);
+        if (!owner) return;
+        task.ownerId = newOwnerId;
+        saveState();
+        render();
+        toast(`Movida a ${owner.name}`);
+      }
+
+      /* ——— Owner CRUD ——— */
+      function openOwnerModal(owner = null) {
+        document.getElementById("ownerForm").reset();
+        document.getElementById("ownerModalTitle").textContent = owner ? "Editar propietario" : "Añadir propietario";
+        document.getElementById("ownerId").value = owner?.id || "";
+        document.getElementById("ownerName").value = owner?.name || "";
+        document.getElementById("ownerSala").value = owner?.sala || "Florida";
+
+        const usedColors = new Set(state.owners.filter(o => o.id !== owner?.id).map(o => o.color));
+        let selected = owner?.color || OWNER_PALETTE.find(c => !usedColors.has(c)) || OWNER_PALETTE[0];
+        document.getElementById("ownerColor").value = selected;
+
+        const swatches = document.getElementById("colorSwatches");
+        swatches.innerHTML = OWNER_PALETTE.map(c =>
+          `<button type="button" class="color-swatch ${c === selected ? "selected" : ""}"
+            style="background:${c}" data-color="${c}" aria-label="Color ${c}"></button>`
+        ).join("");
+
+        swatches.querySelectorAll(".color-swatch").forEach(btn => {
+          btn.addEventListener("click", () => {
+            swatches.querySelectorAll(".color-swatch").forEach(b => b.classList.remove("selected"));
+            btn.classList.add("selected");
+            document.getElementById("ownerColor").value = btn.dataset.color;
+          });
+        });
+
+        openModal("ownerModal");
+        setTimeout(() => document.getElementById("ownerName").focus(), 50);
+      }
+
+      function saveOwner(e) {
+        e.preventDefault();
+        const id = document.getElementById("ownerId").value;
+        const name = document.getElementById("ownerName").value.trim();
+        const color = document.getElementById("ownerColor").value;
+        const sala = document.getElementById("ownerSala").value;
+        if (!name) return;
+
+        if (id) {
+          const owner = state.owners.find(o => o.id === id);
+          if (owner) {
+            owner.name = name;
+            owner.color = color;
+            owner.sala = sala;
+          }
+          toast("Propietario actualizado");
+        } else {
+          state.owners.push({ id: uid("o"), name, color, sala });
+          toast("Propietario añadido");
+        }
+
+        saveState();
+        closeModal("ownerModal");
+        render();
+      }
+
+      function deleteOwner(ownerId) {
+        const owner = state.owners.find(o => o.id === ownerId);
+        if (!owner) return;
+        const count = state.tasks.filter(t => t.ownerId === ownerId).length;
+        const extra = count
+          ? ` Se eliminarán también ${count} tarea${count !== 1 ? "s" : ""}.`
+          : "";
+        askConfirm(
+          "Eliminar propietario",
+          `¿Eliminar a ${owner.name}?${extra}`,
+          () => {
+            state.owners = state.owners.filter(o => o.id !== ownerId);
+            state.tasks = state.tasks.filter(t => t.ownerId !== ownerId);
+            if (state.filter === ownerId) state.filter = "all";
+            saveState();
+            render();
+            toast("Propietario eliminado");
+          }
+        );
+      }
+
+      /* ——— Drag & Drop ——— */
+      function rowDragStart(e, taskId) {
+        dragTaskId = taskId;
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", taskId);
+        e.target.closest("tr")?.classList.add("dragging");
+      }
+
+      function rowDragEnd(e) {
+        e.target.closest("tr")?.classList.remove("dragging");
+        document.querySelectorAll(".owner-section.drop-target").forEach(el =>
+          el.classList.remove("drop-target")
+        );
+        dragTaskId = null;
+      }
+
+      function sectionDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        const section = e.currentTarget;
+        if (section && dragTaskId) section.classList.add("drop-target");
+      }
+
+      function sectionDragLeave(e) {
+        const section = e.currentTarget;
+        if (!section.contains(e.relatedTarget)) {
+          section.classList.remove("drop-target");
+        }
+      }
+
+      function sectionDrop(e, ownerId) {
+        e.preventDefault();
+        e.currentTarget.classList.remove("drop-target");
+        const taskId = e.dataTransfer.getData("text/plain") || dragTaskId;
+        if (taskId) moveTask(taskId, ownerId);
+      }
+
+      /* ——— Event wiring ——— */
+      function initEvents() {
+        document.getElementById("ownerFilter").addEventListener("change", (e) => {
+          state.filter = e.target.value;
+          saveState();
+          render();
+        });
+
+        document.getElementById("btnAddOwner").addEventListener("click", () => openOwnerModal());
+        document.getElementById("btnTheme").addEventListener("click", toggleTheme);
+
+        document.getElementById("taskForm").addEventListener("submit", saveTask);
+        document.getElementById("ownerForm").addEventListener("submit", saveOwner);
+        document.getElementById("moveForm").addEventListener("submit", (e) => {
+          e.preventDefault();
+          const taskId = document.getElementById("moveTaskId").value;
+          const ownerId = document.getElementById("moveOwnerSelect").value;
+          closeModal("moveModal");
+          moveTask(taskId, ownerId);
+        });
+
+        document.getElementById("confirmOk").addEventListener("click", () => {
+          closeModal("confirmModal");
+          if (typeof confirmCallback === "function") {
+            confirmCallback();
+            confirmCallback = null;
+          }
+        });
+
+        document.querySelectorAll("[data-close-modal]").forEach(btn => {
+          btn.addEventListener("click", () => closeModal(btn.dataset.closeModal));
+        });
+
+        document.querySelectorAll(".modal-overlay").forEach(overlay => {
+          overlay.addEventListener("click", (e) => {
+            if (e.target === overlay) closeModal(overlay.id);
+          });
+        });
+
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") {
+            ["taskModal", "ownerModal", "moveModal", "confirmModal"].forEach(closeModal);
+          }
+        });
+
+        document.getElementById("appMain").addEventListener("click", (e) => {
+          const btn = e.target.closest("[data-action]");
+          if (!btn) return;
+          const { action, ownerId, taskId } = btn.dataset;
+
+          switch (action) {
+            case "add-task-owner":
+              openTaskModal(null, ownerId);
+              break;
+            case "edit-owner":
+              openOwnerModal(state.owners.find(o => o.id === ownerId));
+              break;
+            case "delete-owner":
+              deleteOwner(ownerId);
+              break;
+            case "edit-task":
+              openTaskModal(state.tasks.find(t => t.id === taskId));
+              break;
+            case "delete-task":
+              deleteTask(taskId);
+              break;
+            case "move-task":
+              openMoveModal(taskId);
+              break;
+          }
+        });
+      }
+
+      /* Expose DnD handlers for inline attributes */
+      window.__daylist = {
+        rowDragStart,
+        rowDragEnd,
+        sectionDragOver,
+        sectionDragLeave,
+        sectionDrop
+      };
+
+      /* ——— Boot ——— */
+      applyTheme(getPreferredTheme());
+      loadState();
+      initEvents();
+      render();
+
+      let lastCompact = !canDragTasks();
+      window.addEventListener("resize", () => {
+        const compact = !canDragTasks();
+        if (compact !== lastCompact) {
+          lastCompact = compact;
+          render();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
