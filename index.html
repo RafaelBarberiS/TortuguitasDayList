@@ -12,12 +12,15 @@
           t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
         }
         document.documentElement.setAttribute("data-theme", t);
+        var s = localStorage.getItem("tortuguitas-daylist-skin");
+        if (s !== "formal" && s !== "tmnt") s = "formal";
+        document.documentElement.setAttribute("data-skin", s);
       } catch (e) {}
     })();
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;500;600;700&family=Teko:wght@600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
       --bg: #f0f3f7;
@@ -265,6 +268,247 @@
     html[data-theme="dark"] .theme-toggle .icon-sun { display: none; }
     html[data-theme="dark"] .theme-toggle .icon-moon { display: block; }
 
+    .skin-toggle .icon-skin-tmnt { display: block; }
+    .skin-toggle .icon-skin-formal { display: none; }
+    html[data-skin="tmnt"] .skin-toggle .icon-skin-tmnt { display: none; }
+    html[data-skin="tmnt"] .skin-toggle .icon-skin-formal { display: block; }
+
+    .brand-mark-tmnt { display: none; }
+    .char-avatar, .char-badge { display: none; }
+
+    html[data-skin="tmnt"] .brand-mark-formal { display: none; }
+    html[data-skin="tmnt"] .brand-mark-tmnt { display: grid; }
+    html[data-skin="tmnt"] .char-avatar,
+    html[data-skin="tmnt"] .char-badge { display: inline-flex; }
+
+    /* ——— TMNT skin overrides ——— */
+    html[data-skin="tmnt"] {
+      --font-display: "Bangers", "Teko", Impact, "Arial Black", sans-serif;
+      --tmnt-green: #3d8c40;
+      --tmnt-green-bright: #5cbf3a;
+      --pizza: #e8a317;
+      --owner-tint-alpha: 0.2;
+    }
+
+    html[data-skin="tmnt"]:not([data-theme="dark"]) {
+      --bg: #e8f0e4;
+      --bg-accent: #d4e4ce;
+      --bg-end: #c5d9bc;
+      --surface: #f7faf4;
+      --surface-muted: #eef5ea;
+      --header-bg: rgba(247, 250, 244, 0.94);
+      --text: #1a2e1c;
+      --text-muted: #4d6b50;
+      --border: #b7cbb0;
+      --border-soft: #d5e3d0;
+      --primary: #3d8c40;
+      --primary-hover: #2f6e32;
+      --shadow: 0 2px 0 rgba(26, 46, 28, 0.08), 0 4px 14px rgba(26, 46, 28, 0.06);
+      --shadow-lg: 0 8px 28px rgba(26, 46, 28, 0.14);
+      --toast-bg: #1a2e1c;
+      --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234d6b50' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    }
+
+    html[data-skin="tmnt"][data-theme="dark"] {
+      --bg: #0c1610;
+      --bg-accent: #122018;
+      --bg-end: #1a2a1f;
+      --surface: #18241c;
+      --surface-muted: #1e2e24;
+      --header-bg: rgba(24, 36, 28, 0.94);
+      --text: #e6f2e4;
+      --text-muted: #9bb89a;
+      --border: #2f4a36;
+      --border-soft: #24382b;
+      --primary: #6dd45a;
+      --primary-hover: #8ae675;
+      --shadow: 0 2px 0 rgba(0, 0, 0, 0.35), 0 4px 16px rgba(0, 0, 0, 0.3);
+      --shadow-lg: 0 10px 32px rgba(0, 0, 0, 0.45);
+      --toast-bg: #e6f2e4;
+      --toast-text: #0c1610;
+      --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239bb89a' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      --owner-tint-alpha: 0.28;
+    }
+
+    html[data-skin="tmnt"] body {
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpath fill='%23000000' fill-opacity='0.04' d='M0 22h48v4H0zm22 0h4v26h-4zm0-22h4v22h-4z'/%3E%3C/svg%3E"),
+        linear-gradient(160deg, var(--bg) 0%, var(--bg-accent) 50%, var(--bg-end) 100%);
+      background-attachment: fixed;
+    }
+
+    html[data-skin="tmnt"][data-theme="dark"] body {
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpath fill='%23ffffff' fill-opacity='0.035' d='M0 22h48v4H0zm22 0h4v26h-4zm0-22h4v22h-4z'/%3E%3C/svg%3E"),
+        linear-gradient(160deg, var(--bg) 0%, var(--bg-accent) 50%, var(--bg-end) 100%);
+    }
+
+    html[data-skin="tmnt"] .brand h1 {
+      font-family: var(--font-display);
+      font-size: 1.65rem;
+      letter-spacing: 0.06em;
+      font-weight: 400;
+      line-height: 1;
+      text-transform: uppercase;
+      font-style: italic;
+      color: #f0e24a;
+      -webkit-text-stroke: 1.5px #1a3d18;
+      paint-order: stroke fill;
+      text-shadow:
+        2px 2px 0 #1a2e1c,
+        -1px 0 0 #2d6b2a,
+        0 -1px 0 #2d6b2a;
+      transform: skewX(-8deg);
+      transform-origin: left center;
+    }
+
+    html[data-skin="tmnt"][data-theme="dark"] .brand h1 {
+      color: #ffe566;
+      -webkit-text-stroke: 1.5px #0a1f0c;
+      text-shadow:
+        2px 2px 0 #000,
+        0 0 12px rgba(93, 191, 58, 0.35);
+    }
+
+    html[data-skin="tmnt"] .brand span {
+      font-family: "Teko", var(--font);
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    html[data-skin="tmnt"] .brand-mark-tmnt {
+      background: linear-gradient(145deg, #3d8c40, #2a6b2e);
+      box-shadow: 2px 2px 0 rgba(26, 46, 28, 0.25);
+    }
+
+    html[data-skin="tmnt"] .brand-mark-tmnt svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    html[data-skin="tmnt"] .app-header {
+      border-bottom-width: 3px;
+      border-bottom-color: color-mix(in srgb, var(--primary) 55%, var(--border));
+    }
+
+    html[data-skin="tmnt"] .btn,
+    html[data-skin="tmnt"] .btn-ghost,
+    html[data-skin="tmnt"] select,
+    html[data-skin="tmnt"] .inline-select {
+      border-width: 2px;
+      box-shadow: 1px 1px 0 rgba(26, 46, 28, 0.08);
+    }
+
+    html[data-skin="tmnt"] .btn-primary {
+      box-shadow: 2px 2px 0 rgba(26, 46, 28, 0.2);
+    }
+
+    html[data-skin="tmnt"] .owner-section {
+      border-width: 3px;
+      box-shadow: 3px 3px 0 color-mix(in srgb, var(--owner-color) 35%, transparent);
+      background-color: var(--surface);
+      background-image: var(--owner-bg, none);
+      background-size: cover;
+      background-position: center top;
+      background-repeat: no-repeat;
+    }
+
+    html[data-skin="tmnt"] .owner-header {
+      background: color-mix(in srgb, var(--surface) 82%, transparent);
+      border-bottom: 2px solid color-mix(in srgb, var(--owner-color) 40%, transparent);
+      backdrop-filter: blur(2px);
+    }
+
+    html[data-skin="tmnt"] .table-wrap {
+      background: color-mix(in srgb, var(--surface) 94%, transparent);
+    }
+
+    html[data-skin="tmnt"] .char-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 2px solid var(--owner-color, var(--border));
+      background: var(--surface);
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+      padding: 0;
+    }
+
+    html[data-skin="tmnt"] .char-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    html[data-skin="tmnt"] .char-avatar svg {
+      width: 28px;
+      height: 28px;
+    }
+
+    html[data-skin="tmnt"] .char-badge {
+      align-items: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--owner-color);
+      background: color-mix(in srgb, var(--owner-color) 16%, var(--surface));
+      border: 1.5px solid color-mix(in srgb, var(--owner-color) 40%, transparent);
+      padding: 0.12rem 0.5rem;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+
+    html[data-skin="tmnt"] .owner-dot { display: none; }
+
+    html[data-skin="tmnt"] .modal {
+      border: 3px solid var(--primary);
+      box-shadow: 4px 4px 0 color-mix(in srgb, var(--primary) 30%, transparent);
+    }
+
+    html[data-skin="tmnt"] .modal-header {
+      background: color-mix(in srgb, var(--primary) 12%, var(--surface));
+      border-bottom-width: 2px;
+    }
+
+    html[data-skin="tmnt"] .modal-header h3 {
+      font-family: var(--font-display);
+      letter-spacing: 0.03em;
+      font-weight: 400;
+      font-size: 1.35rem;
+    }
+
+    html[data-skin="tmnt"] .empty-state h2,
+    html[data-skin="tmnt"] .no-tasks td {
+      font-family: var(--font-display);
+      letter-spacing: 0.03em;
+      font-weight: 400;
+    }
+
+    html[data-skin="tmnt"] .no-tasks td {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    html[data-skin="tmnt"] .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      min-width: 0;
+    }
+
+    html[data-skin="tmnt"] tbody tr:nth-child(even) {
+      background: color-mix(in srgb, var(--owner-color, #3d8c40) 6%, transparent);
+    }
+
     .sync-status {
       display: inline-flex;
       align-items: center;
@@ -288,6 +532,16 @@
     .sync-status.is-pending .sync-dot { background: #eab308; }
     .sync-status.is-error .sync-dot { background: #ef4444; }
     .sync-status.is-offline .sync-dot { background: #94a3b8; }
+
+    @media (max-width: 900px) {
+      html[data-skin="tmnt"] .brand h1 { font-size: 1.15rem; }
+    }
+
+    @media (max-width: 600px) {
+      html[data-skin="tmnt"] .char-badge { font-size: 0.65rem; }
+      html[data-skin="tmnt"] .brand h1 { font-size: 1rem; }
+      html[data-skin="tmnt"] .brand span { display: none; }
+    }
 
     /* ——— Main ——— */
     .app-main {
@@ -721,12 +975,12 @@
         height: auto;
         min-height: unset;
         display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-columns: minmax(0, 1fr) auto auto;
         grid-template-areas:
-          "brand theme"
+          "brand skin theme"
           "tools tools";
         align-items: center;
-        column-gap: 0.75rem;
+        column-gap: 0.5rem;
         row-gap: 0.65rem;
         padding: 0.75rem 1rem;
         padding-left: max(1rem, env(safe-area-inset-left));
@@ -754,6 +1008,13 @@
         gap: 0.5rem;
         width: 100%;
         flex-wrap: nowrap;
+      }
+
+      #btnSkin {
+        grid-area: skin;
+        align-self: center;
+        width: 40px;
+        height: 40px;
       }
 
       #btnTheme {
@@ -1065,10 +1326,20 @@
 <body>
   <header class="app-header">
     <div class="brand">
-      <div class="brand-mark">TD</div>
-      <div>
-        <h1>Tortuguitas Daylist</h1>
-        <span>Gestión diaria del equipo</span>
+      <div class="brand-mark brand-mark-formal">TD</div>
+      <div class="brand-mark brand-mark-tmnt" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="12" cy="13" rx="8" ry="7.5" fill="#6dbf4a"/>
+          <path d="M7 11.5c1.2-2 2.8-3 5-3s3.8 1 5 3" stroke="#2d5a28" stroke-width="1.4" stroke-linecap="round"/>
+          <path d="M8 13.5h8M9 16h6" stroke="#2d5a28" stroke-width="1.2" stroke-linecap="round"/>
+          <path d="M4.5 10.5c-.8-2.2.2-4 2-4.2M19.5 10.5c.8-2.2-.2-4-2-4.2" stroke="#6dbf4a" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="brand-wrap">
+        <div>
+          <h1>Tortuguitas Daylist</h1>
+          <span>Gestión diaria del equipo</span>
+        </div>
       </div>
     </div>
     <div class="header-controls">
@@ -1088,6 +1359,10 @@
           <span class="btn-label">Propietario</span>
         </button>
       </div>
+      <button type="button" class="btn-icon skin-toggle" id="btnSkin" title="Activar skin Tortugas Ninja" aria-label="Activar skin Tortugas Ninja">
+        <svg class="icon-skin-tmnt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="13" rx="7" ry="6.5"/><path d="M8 11.5c1-1.6 2.4-2.4 4-2.4s3 0.8 4 2.4"/><path d="M5 10c-.6-1.8.3-3.2 1.6-3.4M19 10c.6-1.8-.3-3.2-1.6-3.4"/><circle cx="9.5" cy="13" r="0.8" fill="currentColor" stroke="none"/><circle cx="14.5" cy="13" r="0.8" fill="currentColor" stroke="none"/></svg>
+        <svg class="icon-skin-formal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 9h8M8 13h5"/></svg>
+      </button>
       <button type="button" class="btn-icon theme-toggle" id="btnTheme" title="Cambiar tema" aria-label="Cambiar tema claro u oscuro">
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
         <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 14.5A8.5 8.5 0 1 1 9.5 3a7 7 0 0 0 11.5 11.5z"/></svg>
@@ -1229,6 +1504,7 @@
 
       const STORAGE_KEY = "tortuguitas-daylist-v1";
       const THEME_KEY = "tortuguitas-daylist-theme";
+      const SKIN_KEY = "tortuguitas-daylist-skin";
 
       /**
        * Google Sheets (Apps Script) — pegá acá la URL /exec y el token.
@@ -1247,6 +1523,65 @@
         "#2d8a5e", "#b53d5a", "#5c6bc0", "#00897b",
         "#d4a017", "#546e7a"
       ];
+
+      /* TMNT assets (carpeta /assets) */
+      const AVATAR_SHELL = `
+        <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <ellipse cx="20" cy="21" rx="13" ry="12" fill="#6dbf4a"/>
+          <path d="M20 10v22M10 16h20M11 26h18" stroke="#2d5a28" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>`;
+
+      const CHARACTER_BY_ID = {
+        o1: {
+          key: "raphael", label: "Raphael", color: "#c0392b",
+          avatar: "assets/avatar_rafael.jfif", bg: "assets/bg_rafael.jfif"
+        },
+        o2: {
+          key: "donatello", label: "Donatello", color: "#7b4b94",
+          avatar: "assets/avatar_donatello.jfif", bg: "assets/bg_donatello.jfif"
+        },
+        o3: {
+          key: "splinter", label: "Splinter", color: "#8b7355",
+          avatar: "assets/avatar_splinter.jfif", bg: "assets/bg_splinter.jfif"
+        },
+        o4: {
+          key: "michelangelo", label: "Michelangelo", color: "#e67e22",
+          avatar: "assets/avatar_migelangel.jfif", bg: "assets/bg_migelangel.jfif"
+        },
+        o5: {
+          key: "leonardo", label: "Leonardo", color: "#2980b9",
+          avatar: "assets/avatar_leonardo.jfif", bg: "assets/bg_leonardo.jfif"
+        },
+        o6: {
+          key: "april", label: "April O'Neil", color: "#e8a317",
+          avatar: "assets/avatar_abril.jfif", bg: "assets/bg_abril.jfif"
+        }
+      };
+
+      function getCharacter(owner) {
+        if (!owner) return null;
+        if (CHARACTER_BY_ID[owner.id]) return CHARACTER_BY_ID[owner.id];
+        const key = String(owner.name || "").trim().toLowerCase()
+          .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const byName = {
+          "agustina castillo": CHARACTER_BY_ID.o1,
+          "agustin marquez": CHARACTER_BY_ID.o2,
+          "kevin garcia": CHARACTER_BY_ID.o3,
+          "rafael barberi": CHARACTER_BY_ID.o4,
+          "gustavo sotelo": CHARACTER_BY_ID.o5,
+          "albana pais": CHARACTER_BY_ID.o6
+        };
+        return byName[key] || null;
+      }
+
+      function getOwnerVisual(owner) {
+        const ch = getCharacter(owner);
+        const skin = document.documentElement.getAttribute("data-skin");
+        if (skin === "tmnt" && ch) {
+          return { color: ch.color, character: ch, bg: ch.bg || "" };
+        }
+        return { color: owner.color || OWNER_PALETTE[0], character: ch, bg: "" };
+      }
 
       const DEFAULT_OWNERS = [
         { id: "o1", name: "Agustina Castillo", color: OWNER_PALETTE[0], sala: "Florida" },
@@ -1507,7 +1842,7 @@
         return `rgba(${r}, ${g}, ${b}, ${alpha})`;
       }
 
-      /* ——— Theme ——— */
+      /* ——— Theme & Skin ——— */
       function getPreferredTheme() {
         const saved = localStorage.getItem(THEME_KEY);
         if (saved === "light" || saved === "dark") return saved;
@@ -1527,6 +1862,28 @@
       function toggleTheme() {
         const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
         applyTheme(next);
+        render();
+      }
+
+      function getPreferredSkin() {
+        const saved = localStorage.getItem(SKIN_KEY);
+        return saved === "tmnt" ? "tmnt" : "formal";
+      }
+
+      function applySkin(skin) {
+        const value = skin === "tmnt" ? "tmnt" : "formal";
+        document.documentElement.setAttribute("data-skin", value);
+        localStorage.setItem(SKIN_KEY, value);
+        const btn = document.getElementById("btnSkin");
+        if (btn) {
+          btn.title = value === "tmnt" ? "Volver a skin formal" : "Activar skin Tortugas Ninja";
+          btn.setAttribute("aria-label", btn.title);
+        }
+      }
+
+      function toggleSkin() {
+        const next = document.documentElement.getAttribute("data-skin") === "tmnt" ? "formal" : "tmnt";
+        applySkin(next);
         render();
       }
 
@@ -1657,16 +2014,27 @@
 
       function renderOwnerSection(owner) {
         const tasks = getOwnerTasks(owner.id);
-        const tint = tintColor(owner.color);
+        const visual = getOwnerVisual(owner);
+        const tint = tintColor(visual.color);
+        const ch = visual.character;
+        const avatarHtml = ch
+          ? `<span class="char-avatar" title="${escapeHtml(ch.label)}"><img src="${ch.avatar}" alt="${escapeHtml(ch.label)}" /></span>`
+          : `<span class="char-avatar" title="Caparazón">${AVATAR_SHELL}</span>`;
+        const badgeHtml = ch
+          ? `<span class="char-badge">${escapeHtml(ch.label)}</span>`
+          : "";
+        const bgStyle = visual.bg ? `--owner-bg:url('${visual.bg}');` : "";
 
         return `
           <section class="owner-section"
             data-owner-id="${owner.id}"
-            style="--owner-color:${owner.color};--owner-tint:${tint};">
+            style="--owner-color:${visual.color};--owner-tint:${tint};${bgStyle}">
             <div class="owner-header">
               <div class="owner-title">
                 <span class="owner-dot" aria-hidden="true"></span>
+                ${avatarHtml}
                 <h2>${escapeHtml(owner.name)}</h2>
+                ${badgeHtml}
                 <span class="task-count">${tasks.length} tarea${tasks.length !== 1 ? "s" : ""}</span>
                 <div class="owner-sede">
                   <label for="sede-${owner.id}">Sede</label>
@@ -2040,6 +2408,7 @@
 
         document.getElementById("btnAddOwner").addEventListener("click", () => openOwnerModal());
         document.getElementById("btnTheme").addEventListener("click", toggleTheme);
+        document.getElementById("btnSkin").addEventListener("click", toggleSkin);
 
         document.getElementById("taskForm").addEventListener("submit", saveTask);
         document.getElementById("ownerForm").addEventListener("submit", saveOwner);
@@ -2110,6 +2479,7 @@
 
       /* ——— Boot ——— */
       applyTheme(getPreferredTheme());
+      applySkin(getPreferredSkin());
       initEvents();
 
       (async () => {
