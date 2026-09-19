@@ -265,6 +265,30 @@
     html[data-theme="dark"] .theme-toggle .icon-sun { display: none; }
     html[data-theme="dark"] .theme-toggle .icon-moon { display: block; }
 
+    .sync-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      white-space: nowrap;
+      max-width: 140px;
+    }
+
+    .sync-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #94a3b8;
+      flex-shrink: 0;
+    }
+
+    .sync-status.is-ok .sync-dot { background: #22c55e; }
+    .sync-status.is-pending .sync-dot { background: #eab308; }
+    .sync-status.is-error .sync-dot { background: #ef4444; }
+    .sync-status.is-offline .sync-dot { background: #94a3b8; }
+
     /* ——— Main ——— */
     .app-main {
       padding: 1.5rem;
@@ -1049,6 +1073,10 @@
     </div>
     <div class="header-controls">
       <div class="header-tools">
+        <div class="sync-status is-offline" id="syncStatus" title="Estado de sincronización con Google Sheets">
+          <span class="sync-dot" aria-hidden="true"></span>
+          <span class="sync-label">Local</span>
+        </div>
         <div class="filter-group">
           <label for="ownerFilter">Propietario</label>
           <select id="ownerFilter" aria-label="Filtrar por propietario">
@@ -1202,6 +1230,18 @@
       const STORAGE_KEY = "tortuguitas-daylist-v1";
       const THEME_KEY = "tortuguitas-daylist-theme";
 
+      /**
+       * Google Sheets (Apps Script) — pegá acá la URL /exec y el token.
+       * Mientras SHEETS_API_URL esté vacío, la app usa solo localStorage.
+       */
+      const SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbyZ64BI7_4Z5mZpW1AKnkmFpUGvTGP8T70X5jAxYKgMJzZw0CUHRGmM_Bz5WBCRMmjY/exec";
+      const SHEETS_API_TOKEN = "Florida428";
+
+      const sheetsEnabled = () => Boolean(SHEETS_API_URL && SHEETS_API_URL.includes("http"));
+      let saveTimer = null;
+      let saveInFlight = false;
+      let saveQueued = false;
+
       const OWNER_PALETTE = [
         "#0d7377", "#c45c26", "#3b6ea5", "#7b4b94",
         "#2d8a5e", "#b53d5a", "#5c6bc0", "#00897b",
@@ -1252,22 +1292,130 @@
       let dragOwnerId = null;
 
       /* ——— Persistence ——— */
-      function loadState() {
+      function setSyncStatus(mode, label) {
+        const el = document.getElementById("syncStatus");
+        if (!el) return;
+        el.className = `sync-status is-${mode}`;
+        const text = el.querySelector(".sync-label");
+        if (text) text.textContent = label;
+        el.title = label;
+      }
+
+      function cacheLocal() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          owners: state.owners,
+          tasks: state.tasks,
+          filter: state.filter
+        }));
+      }
+
+      function readLocalCache() {
         try {
           const raw = localStorage.getItem(STORAGE_KEY);
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            if (parsed.owners?.length) {
-              state.owners = parsed.owners.map(normalizeOwner);
-              state.tasks = (parsed.tasks || []).map(normalizeTask);
-              state.filter = parsed.filter || "all";
-              ensureTaskOrders();
-              return;
-            }
+          if (!raw) return null;
+          const parsed = JSON.parse(raw);
+          if (!parsed.owners?.length) return null;
+          return parsed;
+        } catch (_) {
+          return null;
+        }
+      }
+
+      async function loadState() {
+        const cached = readLocalCache();
+        if (cached) {
+          state.owners = cached.owners.map(normalizeOwner);
+          state.tasks = (cached.tasks || []).map(normalizeTask);
+          state.filter = cached.filter || "all";
+          ensureTaskOrders();
+        }
+
+        if (!sheetsEnabled()) {
+          if (!cached) {
+            state = { owners: structuredClone(DEFAULT_OWNERS), tasks: [], filter: "all" };
+            cacheLocal();
           }
-        } catch (_) { /* ignore corrupt data */ }
-        state = { owners: structuredClone(DEFAULT_OWNERS), tasks: [], filter: "all" };
-        saveState();
+          setSyncStatus("offline", "Local");
+          return;
+        }
+
+        setSyncStatus("pending", "Cargando…");
+        try {
+          const url = `${SHEETS_API_URL}?token=${encodeURIComponent(SHEETS_API_TOKEN)}`;
+          const res = await fetch(url, { method: "GET", redirect: "follow" });
+          const data = await res.json();
+          if (!data.ok) throw new Error(data.error || "Error al leer Sheets");
+
+          if (data.owners?.length) {
+            state.owners = data.owners.map(normalizeOwner);
+            state.tasks = (data.tasks || []).map(normalizeTask);
+            ensureTaskOrders();
+            // conservar filtro local
+            const localFilter = cached?.filter;
+            if (localFilter) state.filter = localFilter;
+            cacheLocal();
+          } else if (!cached) {
+            state = { owners: structuredClone(DEFAULT_OWNERS), tasks: [], filter: "all" };
+            cacheLocal();
+            queueSheetsSave();
+          }
+          setSyncStatus("ok", "Sheets OK");
+        } catch (err) {
+          console.error(err);
+          if (!cached) {
+            state = { owners: structuredClone(DEFAULT_OWNERS), tasks: [], filter: "all" };
+            cacheLocal();
+          }
+          setSyncStatus("error", "Sin Sheets");
+          toast("No se pudo conectar a Sheets. Usando datos locales.");
+        }
+      }
+
+      function saveState() {
+        cacheLocal();
+        if (sheetsEnabled()) queueSheetsSave();
+      }
+
+      function queueSheetsSave() {
+        setSyncStatus("pending", "Guardando…");
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => { flushSheetsSave(); }, 700);
+      }
+
+      async function flushSheetsSave() {
+        if (!sheetsEnabled()) return;
+        if (saveInFlight) {
+          saveQueued = true;
+          return;
+        }
+        saveInFlight = true;
+        setSyncStatus("pending", "Guardando…");
+        try {
+          // text/plain evita preflight CORS con Apps Script
+          const res = await fetch(SHEETS_API_URL, {
+            method: "POST",
+            redirect: "follow",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({
+              token: SHEETS_API_TOKEN,
+              owners: state.owners,
+              tasks: state.tasks
+            })
+          });
+          const data = await res.json();
+          if (!data.ok) throw new Error(data.error || "Error al guardar");
+          setSyncStatus("ok", "Sincronizado");
+        } catch (err) {
+          console.error(err);
+          setSyncStatus("error", "Error sync");
+          toast("No se pudo guardar en Sheets");
+        } finally {
+          saveInFlight = false;
+          if (saveQueued) {
+            saveQueued = false;
+            queueSheetsSave();
+          }
+        }
       }
 
       function normalizeOwner(owner) {
@@ -1281,7 +1429,10 @@
 
       function normalizeTask(task) {
         const { sala, ...rest } = task;
-        return rest;
+        return {
+          ...rest,
+          order: typeof rest.order === "number" ? rest.order : Number(rest.order) || 0
+        };
       }
 
       function ensureTaskOrders() {
@@ -1341,14 +1492,6 @@
         list.forEach((t, i) => { t.order = i; });
         saveState();
         render();
-      }
-
-      function saveState() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          owners: state.owners,
-          tasks: state.tasks,
-          filter: state.filter
-        }));
       }
 
       function uid(prefix) {
@@ -1967,9 +2110,12 @@
 
       /* ——— Boot ——— */
       applyTheme(getPreferredTheme());
-      loadState();
       initEvents();
-      render();
+
+      (async () => {
+        await loadState();
+        render();
+      })();
 
       let lastDesktop = isDesktopReorder();
       window.addEventListener("resize", () => {
